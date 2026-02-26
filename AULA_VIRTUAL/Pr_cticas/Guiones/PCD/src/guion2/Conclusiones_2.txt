@@ -1,0 +1,112 @@
+El uso del modificador synchronized en Java permite garantizar la exclusión mutua en el
+acceso a recursos compartidos entre varios hilos. Cuando un método o un bloque de código
+se declara como sincronizado, Java asocia implícitamente un cerrojo al objeto, de forma
+que solo un hilo puede ejecutar simultáneamente código protegido por ese cerrojo.
+
+En los ejemplos del guion se observa que, al eliminar el modificador synchronized, se
+producen condiciones de carrera en operaciones no atómicas como el incremento de una
+variable compartida, lo que da lugar a resultados incorrectos e impredecibles. Al añadir
+synchronized, estas operaciones se ejecutan en exclusión mutua y el valor final obtenido
+es el esperado, independientemente del orden de ejecución de los hilos.
+
+El uso de synchronized aplicado a bloques de código permite delimitar con mayor precisión
+la sección crítica, evitando sincronizar más código del necesario y mejorando el rendimiento.
+Para ello, es fundamental que todos los hilos utilicen el mismo objeto como cerrojo, ya que
+solo así se garantiza la exclusión mutua entre ellos.
+
+En conclusión, `synchronized` ofrece un mecanismo sencillo, seguro y eficiente para resolver
+problemas básicos de concurrencia, siendo especialmente adecuado para programas de complejidad
+media donde no se requiere una gestión avanzada de cerrojos.
+
+---
+
+EXPLICACIÓN DEL CÓDIGO:
+
+La variable var es un atributo privado del objeto compartido entre los hilos. El constructor
+inicializa su valor y el método getVar() permite acceder a dicho valor desde el exterior
+respetando la encapsulación.
+
+Sin synchronized:
+
+Lo normal es que el resultado final NO sea 2000, puede pasar alguna vez por casualidad.
+Y durante la ejecución se verán números repetidos, saltos raros o valores que vuelven a
+aparecer.
+
+La operación incrementa() no es atómica. En realidad hace tres pasos:
+
+1. temp = var;	// leer var
+2. temp++;		// calcular
+3. var = temp;	// escribir var
+
+Si dos hilos entran a la vez, puede pasar esto:
+
+- var = 10
+- Hilo A lee var		// tempA = 10
+- Hilo B lee var		// tempB = 10
+- A incrementa			// tempA = 11
+- B incrementa			// tempB = 11
+- A escribe				// var = 11
+- B escribe				// var = 11		(aquí se pierde un incremento)
+
+Eso es una condición de carrera y provoca pérdida de actualizaciones (lost updates).
+Además, el sleep(...) dentro del método aumenta muchísimo la probabilidad de que ocurra
+la intercalación anterior, porque fuerza cambios de contexto justo en medio.
+
+Importante: System.out.println(...) no arregla el problema. Que imprimas valores no hace
+la operación segura, solo te deja ver el caos.
+
+---
+
+Con synchronized:
+
+Ahora el resultado final sí es 2000, con 1000 incrementos del hilo A y 1000 del hilo B. 
+Y los valores irán subiendo sin pisarse, aunque el orden entre hilos seguirá mezclado: a 
+veces imprime A, a veces B.
+
+Al poner "synchronized" en el método, Java hace que:
+
+- Para ejecutar incrementa() sobre el objeto compar, un hilo tiene que coger el 
+monitor/cerrojo del objeto.
+- Mientras un hilo está dentro, ningún otro hilo puede entrar en ningún método 
+synchronized del mismo objeto.
+
+Así, el bloque "leer -> incrementar -> escribir" se vuelve atómico respecto a los 
+otros hilos, y no se pierden incrementos.
+
+---
+
+Conclusiones:
+
+- Sin synchronized: hay accesos concurrentes a var y se producen condiciones de carrera,
+por lo que el resultado final normalmente es menor de 2000.
+
+- Con synchronized: hay exclusión mutua en incrementa(), por lo que no hay pérdidas y el
+resultado final es 2000.
+
+---
+
+Pregunta: ¿Por qué a veces al iniciar la ejecución aparece dos veces el valor 2?
+
+Hilo a 2
+Hilo b 2
+Hilo a 3
+Hilo b 4
+Hilo a 5
+Hilo b 6
+...
+Hilo b 1997
+Hilo b 1998
+Hilo b 1999
+Hilo b 2000
+Hilo principal 2000
+
+Porque incrementa() está sincronizado, pero getVar() no lo está, y se imprime fuera del
+método sincronizado. Por tanto, lo que se ve por pantalla no es el valor justo después
+del incremento, sino el valor que se lee cuando toca imprimir, que puede haber cambiado
+ya por el otro hilo.
+
+Solución: hacer que incrementa() devuelva el valor del resultado de la operación que
+realiza el hilo, por lo que se muestra en pantalla es el valor real calculado por
+incrementa(), no el leído por el hilo en la variable volatile, que puede haber cambiado.
+
+Otra alternativa es meter el println() dentro del synchronized.

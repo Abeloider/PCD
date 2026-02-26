@@ -1,0 +1,22 @@
+- En programación concurrente es fundamental controlar correctamente el acceso a las variables
+compartidas entre hilos.
+
+- En Java, el paso de parámetros se realiza siempre por valor, pero en el caso de los objetos
+lo que se copia es la referencia, lo que permite que varios hilos accedan y modifiquen el mismo
+objeto en memoria.
+
+- Las variables de tipo primitivo solo pueden compartirse entre hilos declarándolas como
+variables estáticas, ya que estas pertenecen a la clase y no a las instancias. De este modo,
+todos los hilos pueden acceder y modificar el mismo valor. Cuando se trata de objetos, estos
+pueden compartirse pasando su referencia como parámetro a los hilos que los utilizan.
+
+- El modificador volatile permite asegurar que los cambios realizados por un hilo sobre una
+variable sean visibles inmediatamente para el resto de hilos, evitando problemas derivados de
+optimizaciones del compilador o del uso de memorias caché. Sin embargo, volatile no garantiza
+la exclusión mutua, por lo que no evita condiciones de carrera en operaciones compuestas como
+incrementos.
+
+- En los ejercicios se observa que, sin mecanismos de sincronización adecuados, el acceso
+concurrente a variables compartidas puede producir resultados incorrectos o inconsistentes,
+lo que pone de manifiesto la necesidad de controlar la concurrencia para garantizar el
+correcto funcionamiento del programa.

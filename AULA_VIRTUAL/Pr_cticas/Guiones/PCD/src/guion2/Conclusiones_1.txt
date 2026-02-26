@@ -1,0 +1,63 @@
+La exclusión mutua basada en espera ocupada mediante una variable compartida permite ilustrar
+de forma sencilla los problemas fundamentales de la programación concurrente. Aunque el uso
+de una variable volatile garantiza la visibilidad de los cambios entre hilos, no asegura la
+atomicidad de las operaciones, lo que puede provocar condiciones de carrera.
+
+En el ejemplo analizado, la comprobación de si la sección crítica está libre y la posterior
+entrada en ella no constituyen una operación atómica. Como consecuencia, es posible que dos
+hilos evalúen la condición como verdadera de forma simultánea y accedan a la sección crítica
+al mismo tiempo, obteniéndose resultados incorrectos o comportamientos inesperados.
+
+Además, la espera ocupada provoca un uso ineficiente del procesador, ya que los hilos
+permanecen ejecutándose activamente mientras esperan, consumiendo tiempo de CPU sin realizar
+trabajo útil. Este enfoque no escala bien y resulta especialmente inadecuado en sistemas con
+múltiples hilos o recursos limitados.
+
+En conclusión, aunque la espera ocupada resulta útil con fines didácticos para comprender los
+problemas de la concurrencia, no es una solución segura ni eficiente para garantizar la
+exclusión mutua, siendo preferible el uso de mecanismos de sincronización proporcionados por
+Java como synchronized, ReentrantLock o Semaphore.
+
+---
+
+EXPLICACIÓN DEL CÓDIGO:
+
+No siempre se obtiene el resultado esperado (permitir solo un hilo dentro de la sección
+crítica en cada momento). A veces entran los dos hilos a la vez en la sección crítica
+y el orden de mensajes no cuadra con una exclusión mutua perfecta.
+
+El protocolo que intenta hacer exclusión mutua es:
+
+1. Esperar mientras v == 1.
+2. Cuando parece libre, continuar.
+3. Poner v = 1.
+4. Entrar en la sección crítica.
+5. Al salir, poner v = 0.
+
+El problema es que el paso 1 y el paso 3 no son atómicos. Es decir, pueden ocurrir
+intercalados así:
+
+- Hilo A comprueba v == 0 y sale del while.
+- Justo después, hilo B también comprueba v == 0 y sale del while.
+- Luego A hace v = 1.
+- Luego B hace v = 1 (ya era 1, pero a B le da igual).
+- Ambos entran y ejecutan la “sección crítica”.
+
+Eso es una condición de carrera, y rompe la exclusión mutua.
+
+Volatile no soluciona este problema, solo garantiza la visibilidad (que si un hilo
+cambia v, el otro lo "ve" sin quedarse con un valor en caché) y el orden de
+lectura/escritura alrededor de esa variable.
+
+Pero volatile no convierte "mirar y luego poner" en una operación indivisible (atómica).
+Sigue existiendo la ventana de tiempo entre "he visto que está libre" y "la marco como
+ocupada. Además, el "sleep" agranda todavía más la ventana en la que los dos hilos pueden
+ver v==0 y colarse.
+
+Conclusiones:
+
+- No se garantiza la exclusión mutua.
+- El programa puede producir salidas aparentemente correctas algunas veces, pero no es
+correcto (no es determinista).
+- La razón es que el algoritmo usa espera ocupada con una variable compartida, pero sin
+una operación atómica que haga “comprobar y reservar” en un solo paso.

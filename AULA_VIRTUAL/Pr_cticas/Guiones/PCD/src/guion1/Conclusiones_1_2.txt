@@ -1,0 +1,21 @@
+- Todo programa Java comienza su ejecución con un hilo principal que ejecuta el método main.
+
+- A partir de este hilo se pueden crear otros hilos, dando lugar a una ejecución concurrente
+del programa.
+
+- El orden en el que se ejecutan los hilos no es determinista y puede variar en cada ejecución.
+
+- El hilo principal no espera automáticamente a que finalicen los hilos creados, siendo
+necesario usar el método join() si se desea sincronizar su finalización.
+
+- Los hilos en Java pueden crearse heredando de la clase Thread o implementando la interfaz
+Runnable.
+
+- La herencia de Thread es una solución sencilla, pero limita la herencia de la clase.
+
+- Al implementar Runnable, la clase define únicamente la tarea a ejecutar, mientras que la
+gestión del hilo se realiza mediante un objeto Thread. Esto permite una mayor flexibilidad,
+una mejor reutilización del código y un diseño más adecuado.
+
+- Aunque ambas opciones son correctas, la implementación de Runnable resulta más recomendable
+en aplicaciones concurrentes de mayor tamaño o complejidad.

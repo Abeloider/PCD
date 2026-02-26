@@ -1,0 +1,69 @@
+La clase ReentrantLock permite implementar exclusión mutua de forma explícita y controlada
+en programas concurrentes en Java. Al igual que synchronized, garantiza que solo un hilo
+pueda acceder a la sección crítica en cada momento, evitando condiciones de carrera y
+asegurando resultados correctos en el acceso a recursos compartidos.
+
+A diferencia de synchronized, ReentrantLock no asocia implícitamente el cerrojo a un
+objeto, sino que el programador gestiona de forma explícita la adquisición y liberación del
+cerrojo mediante los métodos lock() y unlock(). Esto permite un mayor control sobre
+cuándo y cómo se protege la sección crítica.
+
+En los ejemplos del guion se observa que, al proteger correctamente la operación de
+incremento con un ReentrantLock, el valor final de la variable compartida es el esperado,
+independientemente del orden de ejecución de los hilos. De este modo, se evita la pérdida
+de actualizaciones que aparecía cuando no existía exclusión mutua.
+
+En conclusión, ReentrantLock ofrece un mecanismo robusto y flexible para la sincronización
+entre hilos, especialmente útil en situaciones donde `synchronized` resulta demasiado
+rígido o insuficiente.
+
+---
+
+EXPLICACIÓN DEL CÓDIGO
+
+La variable var es un atributo privado del objeto compartido entre los hilos. El acceso
+a dicha variable se protege mediante un objeto de tipo ReentrantLock, que actúa como un
+cerrojo explícito (equivalente a un semáforo binario).
+
+El método incrementar() sigue la estructura típica de uso de un cerrojo:
+
+1. El hilo adquiere el cerrojo llamando a lock().
+2. Ejecuta la sección crítica (lectura, incremento y escritura de la variable).
+3. Libera el cerrojo en un bloque finally mediante `unlock()`.
+
+El uso del bloque try–finally es fundamental, ya que garantiza que el cerrojo se libere
+siempre, incluso si se produce una excepción durante la ejecución de la sección crítica.
+De no hacerse así, el programa podría quedar bloqueado indefinidamente.
+
+Al igual que en el caso de synchronized, la operación de incremento no es atómica por sí
+misma, ya que consta de varios pasos:
+
+1. Leer el valor actual (temp = var).
+2. Incrementar el valor (temp++).
+3. Escribir el nuevo valor (var = temp).
+
+El cerrojo asegura que estos pasos se ejecuten como una unidad indivisible respecto a los
+demás hilos, impidiendo intercalaciones peligrosas y evitando condiciones de carrera.
+
+El uso de Thread.sleep(...) dentro de la sección crítica incrementa la probabilidad de
+cambios de contexto, lo que permite comprobar experimentalmente que, aun así, el resultado
+final es correcto gracias al cerrojo.
+
+---
+
+Conclusiones:
+
+- Sin un mecanismo de sincronización, el incremento concurrente produce condiciones de
+carrera y resultados incorrectos.
+
+- ReentrantLock garantiza exclusión mutua de forma explícita, evitando pérdidas de
+actualizaciones.
+
+- El valor final de la variable compartida es correcto (2000), independientemente del orden
+de ejecución de los hilos.
+
+- ReentrantLock ofrece mayor flexibilidad que synchronized, al permitir separar la 
+adquisición y liberación del cerrojo y gestionar cerrojos de forma más avanzada.
+
+- Es especialmente adecuado en programas concurrentes complejos donde se requiere un
+control más fino de la sincronización.

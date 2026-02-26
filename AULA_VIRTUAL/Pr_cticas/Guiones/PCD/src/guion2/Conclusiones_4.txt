@@ -1,0 +1,84 @@
+La clase Semaphore permite implementar mecanismos de exclusión mutua y sincronización
+entre hilos de forma explícita, generalizando el concepto clásico de semáforo de la
+programación concurrente. Un semáforo mantiene un contador interno y controla el acceso
+a los recursos mediante las operaciones acquire() y release().
+
+Cuando el semáforo se inicializa con valor 1, su comportamiento es equivalente al de un
+semáforo binario (mutex), permitiendo que solo un hilo acceda a la sección crítica en cada
+momento. De este modo, se pueden evitar condiciones de carrera y asegurar resultados
+correctos en el acceso a variables compartidas.
+
+En los ejemplos del guion se comprueba que, al proteger correctamente la sección crítica
+con un semáforo, los incrementos concurrentes sobre una variable compartida se realizan en
+exclusión mutua y el valor final obtenido es el esperado, independientemente del orden de
+ejecución de los hilos.
+
+Además de la exclusión mutua, los semáforos permiten implementar sincronización entre
+hilos, forzando un orden concreto de ejecución. Esto resulta especialmente útil para
+coordinar tareas dependientes entre sí, como la impresión ordenada de mensajes entre
+varios hilos.
+
+---
+
+EXPLICACIÓN DEL CÓDIGO: Exclusión mutua con Semaphore
+
+En el ejemplo del contador compartido, la variable n es una variable estática accesible
+por todos los hilos. Para proteger su acceso se utiliza un semáforo mutex inicializado
+a 1, que actúa como un cerrojo binario.
+
+El protocolo seguido por cada hilo es:
+
+1. Llamar a acquire() para solicitar el acceso a la sección crítica.
+2. Leer el valor de la variable compartida.
+3. Incrementar el valor.
+4. Escribir el nuevo valor.
+5. Llamar a release() para liberar el semáforo.
+
+Mientras un hilo mantiene el semáforo, cualquier otro hilo que intente hacer acquire()
+queda bloqueado, garantizando así la exclusión mutua. Gracias a este mecanismo, la
+operación compuesta de incremento se vuelve atómica respecto a los demás hilos y no se
+pierden actualizaciones.
+
+Es importante destacar que las operaciones acquire() y release() deben realizarse en
+parejas. Un uso incorrecto puede provocar bloqueos permanentes o accesos simultáneos no
+deseados. A diferencia de los cerrojos Lock, en los semáforos las liberaciones se
+acumulan incrementando el contador interno.
+
+---
+
+EXPLICACIÓN DEL CÓDIGO: Sincronización con Semaphore
+
+En los ejemplos de sincronización (como la impresión ordenada de "Hola mundo" o
+"hola amigos del mundo"), los semáforos se utilizan para controlar el orden de ejecución
+de los hilos, no solo la exclusión mutua.
+
+Cada semáforo se inicializa con un valor específico que determina qué hilo puede comenzar
+la ejecución. Un hilo espera su turno llamando a acquire() y, tras completar su tarea,
+despierta al siguiente hilo llamando a release() sobre el semáforo correspondiente.
+
+De este modo, se crea una cadena de dependencias entre hilos que garantiza que las palabras
+se impriman en el orden correcto, independientemente de la planificación del sistema
+operativo o de la JVM.
+
+La correcta inicialización de los semáforos es clave para el funcionamiento del programa.
+Un valor inicial incorrecto puede provocar bloqueos o desorden en la ejecución.
+
+---
+
+Conclusiones:
+
+- Los semáforos permiten implementar tanto exclusión mutua como sincronización entre hilos.
+
+- Con un semáforo inicializado a 1 se obtiene un comportamiento equivalente a un mutex.
+
+- El uso correcto de acquire() y release() evita condiciones de carrera y garantiza
+resultados correctos.
+
+- Los semáforos permiten imponer un orden de ejecución entre hilos, algo que no es tan
+directo con synchronized o ReentrantLock.
+
+- Son una herramienta potente pero más propensa a errores si no se usan con cuidado,
+especialmente por desajustes en el número de acquire() y release().
+
+- Resultan especialmente útiles para resolver problemas clásicos de concurrencia como
+productor–consumidor o sincronización por fases.
