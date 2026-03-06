@@ -103,3 +103,6 @@ class Suma extends Thread{
 		}
 	}
 }
+
+// si no implemetamos el lock, el resultado de la suma y el cuadrado se mezclaria
+// ya que ambos hilos acceden a la misma matriz,
