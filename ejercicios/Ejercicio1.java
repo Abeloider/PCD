@@ -1,108 +1,66 @@
 package ejercicios;
 
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Random;
+import java.util.concurrent.Semaphore;
 
-public class Ejercicio1 {
-	public static ReentrantLock lock=new ReentrantLock();
+public class Ejercicio2 {
+	public static void main(String[] args) {
+		// Crear y lanzar 10 hilos (equipos) con identificador único
+		Thread[] equipos = new Thread[10];
+		for (int i = 0; i < 10; i++) {
+			equipos[i] = new Equipo(i);
+			equipos[i].start();
+		}
 
-	public static void main (String[] args) {
-		for(int i=0; i<10; i++){
-		    Cuadrado c= new Cuadrado(1,2,3,4,5,6,7,8,9);
-		    Suma s= new Suma(1,2,3,4,5,6,7,8,9);
-		    
-		    
-		    c.start();
-		    try {
-		    	c.join();
+		// Esperar a que todos terminen
+		for (int i = 0; i < 10; i++) {
+			try {
+				equipos[i].join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		    
-		    s.start();
-		    try {
-				s.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} 
 		}
+		System.out.println("Todos los equipos han terminado.");
 	}
 }
 
-class Cuadrado extends Thread{
-	private int matriz[][];
-	
-	public Cuadrado(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
-		this.matriz= new int[3][3];
-		this.matriz[0][0]=a1;
-		this.matriz[0][1]=a2;
-		this.matriz[0][2]=a3;
-		this.matriz[1][0]=a4;
-		this.matriz[1][1]=a5;
-		this.matriz[1][2]=a6;
-		this.matriz[2][0]=a7;
-		this.matriz[2][1]=a8;
-		this.matriz[2][2]=a9;
+class Equipo extends Thread {
+	private static Semaphore s = new Semaphore(3);
+	private static Semaphore impresion = new Semaphore(1);
+	private int id;
+
+	public Equipo(int id) {
+		this.id = id;
 	}
-	
+
 	public void run() {
-		Ejercicio1.lock.lock();
-		try{
-			int suma;
-			int[][] resultado= new int[3][3];
-			System.out.println("Cuadrado:");
-			for (int i = 0; i < 3; i++) {
-	            for (int j = 0; j < 3; j++) {
-	            	suma=0;
-	                for (int k = 0; k < 3; k++) {
-	                    suma += matriz[i][k] * matriz[k][j];
-	                }
-	                resultado[i][j]=suma;
-					System.out.print(resultado[i][j]+" ");
-	            }
+		try {
+			s.acquire();
+			impresion.acquire();
+			System.out.println("Equipo: " + id);
+			Random rand = new Random();
+			int resultado[][] = new int[4][5];
+			for (int deportista = 0; deportista < 4; deportista++) { // deportistas por hilos
+				int ejercicios[][] = new int[5][5];
+				// creamos una tabla de ejercicios con puntuaciones
+				for (int i = 0; i < 5; i++) { // fila
+					for (int j = 0; j < 5; j++) { // columna
+						ejercicios[i][j] = rand.nextInt(100);
+						if (ejercicios[i][j] > resultado[deportista][i]) {
+							resultado[deportista][i] = ejercicios[i][j];
+						}
+					}
+					System.out.print(resultado[deportista][i] + " ");
+				}
 				System.out.println();
-	        }
+			}
 			System.out.println();
-		}
-		finally {
-			Ejercicio1.lock.unlock();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			impresion.release();
+			s.release();
 		}
 	}
 }
-
-class Suma extends Thread{
-	private int matriz[][];
-	
-	public Suma(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
-		this.matriz= new int[3][3];
-		this.matriz[0][0]=a1;
-		this.matriz[0][1]=a2;
-		this.matriz[0][2]=a3;
-		this.matriz[1][0]=a4;
-		this.matriz[1][1]=a5;
-		this.matriz[1][2]=a6;
-		this.matriz[2][0]=a7;
-		this.matriz[2][1]=a8;
-		this.matriz[2][2]=a9;
-	}
-	
-	public void run() {
-		Ejercicio1.lock.lock();
-		try{
-			System.out.println("Suma:");
-			for (int i = 0; i < 3; i++) {
-	            for (int j = 0; j < 3; j++) {
-	                    matriz[i][j] = matriz[i][j] * 2;
-						System.out.print(matriz[i][j]+" ");
-	                }
-	            System.out.println();
-	            }
-			System.out.println();
-	        }
-		finally {
-			Ejercicio1.lock.unlock();
-		}
-	}
-}
-
-// si no implemetamos el lock, el resultado de la suma y el cuadrado se mezclaria
-// ya que ambos hilos acceden a la misma matriz,
