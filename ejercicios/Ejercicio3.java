@@ -1,186 +1,149 @@
+//no utilizamos el monitor con synchronized ya que este solo nos permite disponer de una cola de espera
+/*
+Para asegurarnos que los clientes elijan la cola con menor tiempo de espera,
+el tiempo aleatorio de validacion de cada cliente se le será asignado
+al momento de entrar a la cola. Ya que si lo hiciesemos
+por numero de clientes en la cola, existe la posibilidad de que otra cola
+con mas clientes tenga un tiempo de espera menor
+*/
 package ejercicios;
 
 import java.util.concurrent.locks.*;
-import java.util.Random;
 
-// --- CLASE MONITOR ---
-// Implementa la lógica de sincronización avanzada usando ReentrantLock y Condition
-// según lo descrito en el apartado 2 del guion[cite: 222, 225].
-class MonitorGimnasio {
-    private final ReentrantLock lock = new ReentrantLock();
-    
-    // Variables de condición: permiten tener distintos wait sets (colas de espera)[cite: 224, 233].
-    private final Condition[] esperaTorno = new Condition[3];
-    private final Condition[] esperaZona = new Condition[4];
-    private final Condition esperaBiciPremium = lock.newCondition();
-    
-    // Estado del recurso
-    private final boolean[] tornoOcupado = new boolean[3];
-    private final int[] maquinasOcupadas = new int[4]; // Máximo 5 por zona
-    private boolean biciPremiumOcupada = false;
-    
-    // Contadores para las estadísticas de espera
-    private final int[] hilosEsperandoTorno = new int[3];
-    private final int[] hilosEsperandoZona = new int[4];
-    private int hilosEsperandoBici = 0;
 
-    public MonitorGimnasio() {
-        for (int i = 0; i < 3; i++) esperaTorno[i] = lock.newCondition();
-        for (int i = 0; i < 4; i++) esperaZona[i] = lock.newCondition();
+public class Ejercicio3{
+	
+	// creamos el candado lock 
+	private ReentrantLock lock = new ReentrantLock(); 
+	
+	// creamos la zona de tornos, la zona de maquinas y la zona de bici premium 
+    private Condition[] tornos = new Condition[3];
+    private Condition[] maquinas = new Condition[4];
+	private Condition biciPremium = lock.newCondition(); 
+		
+	// vemos si de los 3 tornos esta ocupado o no 
+	private boolean[] tornoOcupado = new boolean[3]; 
+	// vemos si en la zona de maquinas ha llegado a 5 maquinas ocupadas como maximo 
+	private int[] maquinasOcupadas = new int[4]; 
+	// de momento la bici esta libre
+	private boolean biciPremiumOcupada = false; 
+
+    // Contadores para las estadísticas 
+    private final int[] filaTornos = new int[3]; // 
+    private final int[] filaZonas = new int[4];
+    private int filabici = 0;
+
+    private Ejercicio3() {
+        for (int i = 0; i < 3; i++) tornos[i] = lock.newCondition();
+        for (int i = 0; i < 4; i++) maquinas[i] = lock.newCondition();
     }
-
-    // Método para acceder a los tornos
-    public int entrarPorTorno(int id) throws InterruptedException {
-        lock.lock(); // Obtención del cerrojo [cite: 259]
-        try {
-            // Lógica: elegir el primer torno libre o el que tenga menos cola
-            int tornoElegido = 0;
-            for (int i = 0; i < 3; i++) {
-                if (!tornoOcupado[i]) { tornoElegido = i; break; }
-                if (hilosEsperandoTorno[i] < hilosEsperandoTorno[tornoElegido]) tornoElegido = i;
+	
+	// metodo para acceder a los tornos 
+	public int entrarTorno() throws InterruptedException {
+		lock.lock(); 
+		try {
+			// implementamos la logica de entrar al torno torno 
+            int mejorTorno = 0;
+            // cogemos la que menor fila de tornos tenga
+			for (int i = 0; i < 3; i++) {
+                if (filaTornos[i] < filaTornos[mejorTorno]) {
+                    mejorTorno = i;
+                }
             }
+            // incrementamos el contador de la fila del torno
+            filaTornos[mejorTorno]++;
+            // esperamos en la cola del torno elegido si esta ocupado, incrementando el contador de espera
+            while (tornoOcupado[mejorTorno]) {
+                tornos[mejorTorno].await();
+            } 
+            // al salir del bucle el hilo ha sido despertado y es su turno, decrementamos el contador de espera 
+            filaTornos[mejorTorno]--;
+            // ocupamos el torno elegido
+            tornoOcupado[mejorTorno] = true;
+            // devolvemos el numero del torno (1, 2 o 3)
+            return mejorTorno + 1; // Devolvemos el número del torno (1, 2 o 3)
+		}finally {
+			lock.unlock();
+		}
+ 	}
+	
 
-            hilosEsperandoTorno[tornoElegido]++;
-            while (tornoOcupado[tornoElegido]) {
-                esperaTorno[tornoElegido].await(); // El hilo espera en la cola del torno [cite: 235]
-            }
-            hilosEsperandoTorno[tornoElegido]--;
-            tornoOcupado[tornoElegido] = true;
-            return tornoElegido + 1;
-        } finally {
-            lock.unlock(); // Liberación del cerrojo en bloque finally [cite: 270, 288]
-        }
-    }
-
-    public void salirTorno(int numTorno) {
+	// metodo para salir torno 
+	public void salirTorno(int numTorno) {
         lock.lock();
         try {
+            // implementamos la logica de salir del torno 
             tornoOcupado[numTorno - 1] = false;
-            esperaTorno[numTorno - 1].signal(); // Despierta a un hilo de esa cola específica [cite: 237]
+            tornos[numTorno - 1].signal(); 
+
         } finally {
             lock.unlock();
         }
     }
 
-    public void entrarZona(int numZona) throws InterruptedException {
-        lock.lock();
-        try {
-            hilosEsperandoZona[numZona]++;
-            while (maquinasOcupadas[numZona] >= 5) {
-                esperaZona[numZona].await(); 
-            }
-            hilosEsperandoZona[numZona]--;
-            maquinasOcupadas[numZona]++;
-        } finally {
-            lock.unlock();
-        }
-    }
+	public void entrarZona(int zona) throws InterruptedException {
+		lock.lock();
+		try {
+			filaZonas[zona]++;
+			while(maquinasOcupadas[zona] >= 5){ {
+				maquinas[zona].await();
+			}
+			filaZonas[zona]--;
+			maquinasOcupadas[zona]++;
+		}
+	}finally{
+			lock.unlock();
+		}
+	}
 
-    public void salirZona(int numZona) {
-        lock.lock();
-        try {
-            maquinasOcupadas[numZona]--;
-            esperaZona[numZona].signal(); 
-        } finally {
-            lock.unlock();
-        }
-    }
+	public void salirZona(int zona) throws InterruptedException {
+		lock.lock();
+		try {
+			maquinasOcupadas[zona]--;
+			maquinas[zona].signal();
+		} 
+		finally {
+			lock.unlock();
+		}
+	}
 
-    public void usarBiciPremium() throws InterruptedException {
-        lock.lock();
-        try {
-            hilosEsperandoBici++;
-            while (biciPremiumOcupada) {
-                esperaBiciPremium.await();
-            }
-            hilosEsperandoBici--;
-            biciPremiumOcupada = true;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void liberarBiciPremium() {
-        lock.lock();
-        try {
-            biciPremiumOcupada = false;
-            esperaBiciPremium.signal();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public int[] getEstimacionZonas() {
-        // No necesita lock porque se llama dentro de un bloque sincronizado en el Cliente
-        return hilosEsperandoZona.clone();
-    }
-
-    public int getEsperaBici() {
-        return hilosEsperandoBici;
-    }
+	public void usarBiciPremium() throws InterruptedException{
+		lock.lock();
+		try {
+			filabici++;
+			while(biciPremiumOcupada) {
+				biciPremium.await();
+			}
+			filabici--;
+			biciPremiumOcupada = true;
+		}
+		finally{
+			lock.unlock();
+		}
+	}
+	
+	public void liberarBiciPremium() throws InterruptedException{
+		lock.lock();
+		try {
+			biciPremiumOcupada = false;
+			biciPremium.signal();
+		}
+		finally{
+			lock.unlock();
+		}
+	}
 }
 
-// --- CLASE HILO CLIENTE ---
-class Cliente extends Thread {
-    private final int id;
-    private final MonitorGimnasio monitor;
-    private static final String[] nombresZonas = {"Cardio", "Fuerza", "Funcional", "Estiramientos"};
 
-    public Cliente(int id, MonitorGimnasio m) {
-        this.id = id;
-        this.monitor = m;
-    }
-
-    @Override
-    public void run() {
-        Random rand = new Random();
-        try {
-            // 1. Acceso por Tornos
-            int tiempoTorno = rand.nextInt(5) + 1;
-            int nTorno = monitor.entrarPorTorno(id);
-            Thread.sleep(tiempoTorno); 
-            monitor.salirTorno(nTorno);
-
-            // 2. Elección de zona y parámetros
-            int zonaElegida = rand.nextInt(4);
-            int tiempoEntreno = rand.nextInt(50) + 10;
-            boolean quiereBici = (zonaElegida == 0 && rand.nextDouble() < 0.3);
-
-            // 3. Impresión obligatoria (Exclusión mutua de pantalla)
-            synchronized (System.out) {
-                int[] espera = monitor.getEstimacionZonas();
-                System.out.println("--------------------------------------------------------------");
-                System.out.println("Cliente " + id + " ha pasado por el torno: " + nTorno);
-                System.out.println("Tiempo en el torno (acceso): " + tiempoTorno);
-                System.out.println("Zona elegida: " + nombresZonas[zonaElegida]);
-                System.out.println("Tiempo de entrenamiento: " + tiempoEntreno);
-                System.out.println("Estimación de espera (sin incluirse a sí mismo):");
-                System.out.printf("  Zona1(Cardio)=%d, Zona2(Fuerza)=%d, Zona3(Funcional)=%d, Zona4(Estiramientos)=%d\n", 
-                                  espera[0], espera[1], espera[2], espera[3]);
-                if (quiereBici) System.out.println("Espera bicicleta premium (si aplica)=" + monitor.getEsperaBici());
-                System.out.println("--------------------------------------------------------------");
-            }
-
-            // 4. Proceso de Entrenamiento
-            monitor.entrarZona(zonaElegida);
-            
-            if (quiereBici) {
-                monitor.usarBiciPremium();
-                Thread.sleep(tiempoEntreno); // Entrenamiento real
-                monitor.liberarBiciPremium();
-            } else {
-                Thread.sleep(tiempoEntreno); // Entrenamiento real
-            }
-            
-            monitor.salirZona(zonaElegida);
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
+// CLASE HILO CLIENTE 
+class cliente extends Thread{
+	
 }
 
-// --- CLASE PRINCIPAL ---
+
+
+
+
 public class Ejercicio3 {
     public static void main(String[] args) {
         MonitorGimnasio monitor = new MonitorGimnasio();
