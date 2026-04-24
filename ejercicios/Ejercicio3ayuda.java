@@ -45,6 +45,7 @@ class MonitorGimnasio {
             while (tornoOcupado[tornoElegido]) {
                 esperaTorno[tornoElegido].await(); // El hilo espera en la cola del torno [cite: 235]
             }
+            // Al salir del bucle, el hilo ha sido despertado y es su turno, decrementamos el contador de espera
             hilosEsperandoTorno[tornoElegido]--;
             tornoOcupado[tornoElegido] = true;
             return tornoElegido + 1;
@@ -123,7 +124,7 @@ class MonitorGimnasio {
 
 // --- CLASE HILO CLIENTE ---
 class Cliente extends Thread {
-    private final int id;
+    private final int id; 
     private final MonitorGimnasio monitor;
     private static final String[] nombresZonas = {"Cardio", "Fuerza", "Funcional", "Estiramientos"};
 
