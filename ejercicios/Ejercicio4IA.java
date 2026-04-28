@@ -1,154 +1,100 @@
-package ejercicios;
+package guion4;
 
-import messagepassing.MailBox;
-import java.io.Serializable;
+import messagepassing.MailBox; // Importamos la clase de la biblioteca JMP 
+import java.util.Random;
 
-// Clase para la respuesta del controlador (debe ser Serializable)
-class Respuesta implements Serializable {
-    int tiempo;
-    char cola; // 'R' o 'L'
+public class Ejercicio4 {
 
-    public Respuesta(int tiempo, char cola) {
-        this.tiempo = tiempo;
-        this.cola = cola;
-    }
-}
+    public static void main(String[] args) {
+        // Creamos los buzones para el torno R y el L 
+        MailBox tornoR = new MailBox();
+        MailBox tornoL = new MailBox();
+        MailBox pantalla = new MailBox(); // Buzón extra para exclusión mutua de la pantalla
 
-// Hilo controlador de accesos
-class Controlador extends Thread {
-    private MailBox requestBox;
-    private MailBox[] replyBoxes;
-    private int numAficionados;
+        //introducimos un token inicial en cada buzon que se le cedera a cada aficionado cuando lo pida
+        // para evitar que haya mas de un aficionado a la vez
+        tornoR.send("tokenR"); 
+        tornoL.send("tokenL");
+        pantalla.send("tokenPantalla");
 
-    public Controlador(MailBox requestBox, MailBox[] replyBoxes, int numAficionados) {
-        this.requestBox = requestBox;
-        this.replyBoxes = replyBoxes;
-        this.numAficionados = numAficionados;
-    }
+        // creamos los hilos para cada aficionado 
+        Thread[] aficionados = new Thread[50];
+        for (int i = 0; i < 50; i++) {
+            aficionados[i] = new Thread(new Aficionado(i, tornoR, tornoL, pantalla));
+            aficionados[i].start(); 
+        }
 
-    @Override
-    public void run() {
-        while (true) {
-            Object msg = requestBox.receive(); // bloqueante si no hay mensajes
-            if (msg instanceof String && ((String) msg).equals("STOP")) {
-                break; // fin del controlador
+        // Esperamos a que terminen
+        for (int i = 0; i < 50; i++) {
+            try {
+                aficionados[i].join(); 
+            } catch (InterruptedException e) {
+                e.printStackTrace(); 
             }
-            int id = (Integer) msg;
-            int tiempo = (int) (Math.random() * 10) + 1; // 1..10
-            char cola = (tiempo <= 5) ? 'R' : 'L';
-            replyBoxes[id - 1].send(new Respuesta(tiempo, cola));
         }
     }
 }
 
-// Hilo aficionado
-class Aficionado extends Thread {
+// La clase implementa Runnable para ser ejecutada por un Thread 
+class Aficionado implements Runnable {
     private int id;
-    private MailBox requestBox;
-    private MailBox myReplyBox;
-    private MailBox tokenR, tokenL;
-    private final int CICLOS = 5;
+    private MailBox tornoR;
+    private MailBox tornoL;
+    private MailBox pantalla;
+    private Random rand;
 
-    public Aficionado(int id, MailBox requestBox, MailBox myReplyBox,
-                      MailBox tokenR, MailBox tokenL) {
+    // Constructor que recibe las referencias a los buzones compartidos  1081]
+    public Aficionado(int id, MailBox tornoR, MailBox tornoL, MailBox pantalla) {
         this.id = id;
-        this.requestBox = requestBox;
-        this.myReplyBox = myReplyBox;
-        this.tokenR = tokenR;
-        this.tokenL = tokenL;
+        this.tornoR = tornoR;
+        this.tornoL = tornoL;
+        this.pantalla = pantalla;
+        this.rand = new Random();
     }
 
     @Override
     public void run() {
-        for (int i = 0; i < CICLOS; i++) {
+        for (int ciclo = 0; ciclo < 5; ciclo++) {
             try {
                 // 1. Acción previa (caminar hacia los baños)
-                Thread.sleep((int) (Math.random() * 401) + 100); // 100-500 ms
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+                Thread.sleep(rand.nextInt(500) + 20); // Simulamos el paseo
 
-            // 2. Solicitar asignación de cola al controlador
-            requestBox.send(id); // envío no bloqueante
-            Respuesta resp = (Respuesta) myReplyBox.receive(); // espera la respuesta
-            int T = resp.tiempo;
-            char cola = resp.cola;
+                // El controlador estima el tiempo (1 a 10)
+                int t = rand.nextInt(10) + 1; 
+                String colaAsignada;
+                MailBox tornoAsignado;
 
-            // 3. Obtener acceso exclusivo al torno (token)
-            if (cola == 'R') {
-                tokenR.receive(); // se bloquea si el torno R está ocupado
-            } else {
-                tokenL.receive();
-            }
+                // Asignación de cola según el tiempo
+                if (t <= 5) {
+                    colaAsignada = "R";
+                    tornoAsignado = tornoR;
+                } else {
+                    colaAsignada = "L";
+                    tornoAsignado = tornoL;
+                }
 
-            // 4. Validar la entrada (usar el torno)
-            System.out.println("Aficionado " + id + " ha usado la cola " + cola +
-                               " Tiempo de validación = " + T);
-            try {
-                Thread.sleep(T); // simula el tiempo de validación
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            System.out.println("Aficionado " + id + " liberando la cola " + cola);
+                // 2. Solicita ponerse en la cola asignada
+                // El hilo se bloquea si el buzón está vacío (alguien está usando el torno) 
+                Object tokenTorno = tornoAsignado.receive(); 
 
-            // 5. Liberar el torno (devolver token)
-            if (cola == 'R') {
-                tokenR.send("token");
-            } else {
-                tokenL.send("token");
-            }
-        }
-    }
-}
+                // 3. Realiza la validación en el torno asignado
+                Thread.sleep(t * 100); // Multiplico por 100ms para simular el tiempo T
 
-// Programa principal
-public class Ejercicio4 {
-    public static void main(String[] args) {
-        final int NUM_AFICIONADOS = 50;
+                // 4. Libera la cola enviando el token de vuelta 
+                tornoAsignado.send(tokenTorno);
 
-        // Buzón para peticiones al controlador (capacidad ilimitada)
-        MailBox requestBox = new MailBox();
+                // 5. Imprime en pantalla (Protegido por exclusión mutua)
+                Object tokenPantalla = pantalla.receive(); 
+                System.out.println("Aficionado " + id + " ha usado la cola " + colaAsignada);
+                System.out.println("Tiempo de validación = " + t);
+                System.out.println("Thread.sleep(" + t + ")");
+                System.out.println("Aficionado " + id + " liberando la cola " + colaAsignada);
+                System.out.println("---------------------------------");
+                pantalla.send(tokenPantalla); 
 
-        // Buzones de respuesta, uno por aficionado (capacidad 1)
-        MailBox[] replyBoxes = new MailBox[NUM_AFICIONADOS];
-        for (int i = 0; i < NUM_AFICIONADOS; i++) {
-            replyBoxes[i] = new MailBox(1);
-        }
-
-        // Buzones token para cada torno (inicialmente con un "token")
-        MailBox tokenR = new MailBox();
-        tokenR.send("token");
-        MailBox tokenL = new MailBox();
-        tokenL.send("token");
-
-        // Crear e iniciar el controlador
-        Controlador control = new Controlador(requestBox, replyBoxes, NUM_AFICIONADOS);
-        control.start();
-
-        // Crear e iniciar los aficionados
-        Aficionado[] fans = new Aficionado[NUM_AFICIONADOS];
-        for (int i = 0; i < NUM_AFICIONADOS; i++) {
-            fans[i] = new Aficionado(i + 1, requestBox, replyBoxes[i], tokenR, tokenL);
-            fans[i].start();
-        }
-
-        // Esperar a que todos los aficionados terminen
-        for (Aficionado f : fans) {
-            try {
-                f.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-
-        // Enviar señal de terminación al controlador
-        requestBox.send("STOP");
-        try {
-            control.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("Todos los aficionados han completado sus ciclos.");
     }
 }
