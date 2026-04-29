@@ -1,5 +1,3 @@
-//no utilizamos el monitor con synchronized ya que este solo nos permite disponer de una cola de espera
-
 package ejercicios;
 
 import java.util.Random;
@@ -7,7 +5,7 @@ import java.util.concurrent.locks.*;
 
 
 class Monitores{
-	
+	//no utilizamos el monitor con synchronized ya que este solo nos permite disponer de una cola de espera
 	// creamos el candado lock 
 	private ReentrantLock lock = new ReentrantLock(); 
 	
@@ -86,10 +84,12 @@ class Monitores{
 			filaZonas[zona]--;
 			maquinasOcupadas[zona]++;
 		}
-	}finally{
+	} finally{
 			lock.unlock();
 		}
 	}
+
+
 // METODO PARA SALIR DE LA ZONA DE MAQUINAS
 	public void salirZona(int zona) throws InterruptedException {
 		lock.lock();
@@ -130,8 +130,9 @@ class Monitores{
 	}
 
 	public int[] getTiempoEspera() {
-		return filaZonas.clone(); // Devolvemos una copia del array para evitar modificaciones externas
+		return filaZonas; // Devolvemos una copia del array para evitar modificaciones externas
 	}
+
 	public int getEsperaBici() {
 		return filabici;
 	}
@@ -160,7 +161,7 @@ class cliente extends Thread{
 			if(zonaElegida==0) { // Si elige la zona de cardio, tiene un 50% de probabilidad de usar la bici premium
 				usoBici = rand.nextInt(100)<30;
 			}
-			//Imprimir
+			//Imprimir en exclusion mutua
 			synchronized (System.out) {
                 int[] espera = monitor.getTiempoEspera();
                 System.out.println("--------------------------------------------------------------");
@@ -171,7 +172,7 @@ class cliente extends Thread{
                 System.out.println("Estimación de espera (sin incluirse a sí mismo):");
                 System.out.printf("  Zona1(Cardio)=%d, Zona2(Fuerza)=%d, Zona3(Funcional)=%d, Zona4(Estiramientos)=%d\n", 
                                   espera[0], espera[1], espera[2], espera[3]);
-                if (quiereBici) System.out.println("Espera bicicleta premium (si aplica)=" + monitor.getEsperaBici());
+                if (usoBici) System.out.println("Espera bicicleta premium (si aplica)=" + monitor.getEsperaBici());
                 System.out.println("--------------------------------------------------------------");
             }
 
@@ -191,10 +192,6 @@ class cliente extends Thread{
 		}
 	}
 }
-
-
-
-
 
 public class Ejercicio3 {
     public static void main(String[] args) {

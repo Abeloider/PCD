@@ -43,10 +43,10 @@ class Aficionado implements Runnable {
     private MailBox pantalla;
     private Random rand;
 
-    // Constructor que recibe las referencias a los buzones compartidos  1081]
+    // Constructor que recibe las referencias a los buzones compartidos
     public Aficionado(int id, MailBox tornoR, MailBox tornoL, MailBox pantalla) {
         this.id = id;
-        this.tornoR = tornoR;
+        this.tornoR = tornoR; 
         this.tornoL = tornoL;
         this.pantalla = pantalla;
         this.rand = new Random();
