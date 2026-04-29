@@ -1,8 +1,8 @@
 package ejercicios;
 
+import Ejercicio2.Panel;
 import java.util.Random;
-import java.util.concurrent.Semaphore;
-import Ejercicio2.Panel; 
+import java.util.concurrent.Semaphore; 
 
 public class Ejercicio2 {
     // Definimos los 3 paneles como recursos compartidos
@@ -65,7 +65,8 @@ class Equipo extends Thread {
                 
                 // Buscar cuál de los 3 paneles está libre realmente
                 for (int i = 0; i < 3; i++) {
-                    if (Ejercicio2.binario[i].tryAcquire()) { // Si el panel i está libre
+                    boolean escrito=false;
+                    if (Ejercicio2.binario[i].tryAcquire() && escrito==false) { // Si el panel i está libre
                         try {
 							// Creacion del mensaje a imprimir
                             String salida = "Usando panel P" + i + " el hilo (equipo) " + id + "\n";
@@ -80,10 +81,10 @@ class Equipo extends Thread {
                             
                             Ejercicio2.paneles[i].escribir_mensaje(salida); //LLamada a la funcion de escritura
                             Thread.sleep(1000);
+                            escrito=true;
                         } finally {
                             Ejercicio2.binario[i].release(); //Libera el panel binario
                         }
-                        break; 
                     }
                 }
             } catch (InterruptedException e) {
