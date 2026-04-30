@@ -40,8 +40,8 @@ class Monitores {
 			int mejorTorno = 0;
 			// cogemos el que menor tiempo de espera (en clientes) tenga
 			for (int i = 0; i < 3; i++) {
-				if (filaTornos[i] < filaTornos[mejorTorno]) { 
-					mejorTorno =i ; 
+				if (filaTornos[i] < filaTornos[mejorTorno]) {
+					mejorTorno = i;
 				}
 			}
 			// incrementamos el contador de la fila del torno
@@ -58,8 +58,6 @@ class Monitores {
 			lock.unlock();
 		}
 	}
-
-
 
 	// metodo para salir torno
 	public void salirTorno(int numTorno) {
@@ -226,9 +224,10 @@ class cliente extends Thread {
 
 			int zonaElegida = monitor.elegirZona(num, torno, tiempoTorno, tiempoZona);
 
-			boolean usoBici=false;
-			if(zonaElegida==0) { // Si elige la zona de cardio, tiene un 50% de probabilidad de usar la bici premium
-				usoBici = rand.nextInt(100)<30;
+			boolean usoBici = false;
+			if (zonaElegida == 0) { // Si elige la zona de cardio, tiene un 50% de probabilidad de usar la bici
+									// premium
+				usoBici = rand.nextInt(100) < 30;
 			}
 
 			monitor.imprimir(num, torno, tiempoTorno, tiempoZona, zonaElegida, usoBici);
