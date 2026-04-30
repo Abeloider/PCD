@@ -91,12 +91,11 @@ class Monitores {
 		try {
 			filaZonas[zona]++;
 			while (maquinasOcupadas[zona] >= 5) {
-				{
+				
 					maquinas[zona].await();
 				}
 				filaZonas[zona]--;
 				maquinasOcupadas[zona]++;
-			}
 		} finally {
 			lock.unlock();
 		}
@@ -226,7 +225,7 @@ class cliente extends Thread {
 		Random rand = new Random();
 		try {
 			int tiempoTorno = rand.nextInt(5) + 1;
-			int tiempoZona = rand.nextInt(50) + 1; // Tiempo de uso en la zona
+			int tiempoZona = rand.nextInt(5000) + 1; // Tiempo de uso en la zona
 
 			int torno = monitor.entrarTorno();
 			Thread.sleep(tiempoTorno);// Esperamos el tiempo señalado de validación en el torno
@@ -235,7 +234,7 @@ class cliente extends Thread {
 			int zonaElegida = monitor.elegirZona(num, torno, tiempoTorno, tiempoZona);
 
 			boolean usoBici = false;
-			if (zonaElegida == 0) { // Si elige la zona de cardio, tiene un 50% de probabilidad de usar la bici
+			if (zonaElegida == 0) { // Si elige la zona de cardio, tiene un 30% de probabilidad de usar la bici
 									// premium
 				usoBici = rand.nextInt(100) < 30;
 			}

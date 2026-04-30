@@ -40,7 +40,7 @@ class Equipo extends Thread {
 		for (int iteracion = 0; iteracion < 3; iteracion++) {
 			int resultado[][] = new int[4][5]; // Matriz para almacenar los mejores resultados de cada deportista
 			for (int deportista = 0; deportista < 4; deportista++) { // Para cada deportista / fila
-				int mejorMarca = 2 ^ 10; // En la prueba de sprint la mejor marca es la más baja
+				int mejorMarca = 101; // En la prueba de sprint la mejor marca es la más baja
 				for (int intento = 0; intento < 5; intento++) { // Cada deportista tiene 5 intentos por ejercicio
 					int marca = rand.nextInt(100); // genera un numero aleatiorio entre 0 al 99
 					if (marca < mejorMarca)
@@ -66,7 +66,7 @@ class Equipo extends Thread {
 
 				// Buscar cuál de los 3 paneles está libre realmente
 				for (int i = 0; i < 3; i++) {
-					if (Ejercicio2.binario[i].tryAcquire()) { // Si el panel i está libre
+					if (Ejercicio2.binario[i].tryAcquire()) { // Si el panel i está libre lo reservamos si no seguimos buscando
 						try {
 							// Creacion del mensaje a imprimir
 							String salida = "Usando panel P" + i + " el hilo (equipo) " + id + "\n";
@@ -84,6 +84,7 @@ class Equipo extends Thread {
 						} finally {
 							Ejercicio2.binario[i].release(); // Libera el panel binario
 						}
+						break; //Evita que entre en varios paneles
 					}
 				}
 			} catch (InterruptedException e) {

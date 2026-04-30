@@ -16,13 +16,12 @@ public class Ejercicio1 {
 			Cuadrado c = new Cuadrado(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
 			Suma s = new Suma(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
 			c.start();
+			s.start();
 			try {
 				c.join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-
-			s.start();
 			try {
 				s.join();
 			} catch (InterruptedException e) {
@@ -129,8 +128,8 @@ class Suma extends Thread {
 			System.out.println("2A");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
-					//Calculo de la sumaclas
-					matriz[i][j] = matriz[i][j] * 2;
+					//Calculo de la suma
+					matriz[i][j] = matriz[i][j] + matriz[i][j];
 					System.out.print(matriz[i][j] + " ");
 				}
 				System.out.println();

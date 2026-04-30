@@ -5,10 +5,7 @@ import messagepassing.MailBox; // Importamos la clase de la biblioteca JMP
 import java.io.Serializable;
 import java.util.Random;
 
-/* 	Implementamos la clase serializable ya que no existe una memoria compartida
-	lo que hace exactamente es convertir el objeto, enviarlo, y deserializarlo en el destino 
-	para crear una copia exacta sin usar una memoria compartida, evitando errores de concurrencia
-*/
+/* 	Clase para almacenar los datos*/
 class DatosAsignacion implements Serializable {
 	int tiempo; 
 	String cola; 
@@ -19,15 +16,12 @@ class DatosAsignacion implements Serializable {
 	}
 }
 
-
-
 public class Ejercicio4 {
 	public static void main(String[] args) {
-		// Aplicamos el patrin de "Simulacion de channel con Buzones" 
-		// 
+		
 		MailBox solicitudes = new MailBox(); 
 		MailBox[] respuestas = new MailBox[50]; 
-
+		// creamos buzones para cada afcionado 
 		for (int i = 0; i < 50; i++) {
             respuestas[i] = new MailBox();
         }
@@ -44,7 +38,7 @@ public class Ejercicio4 {
 		tornoL.send("tokenL");
 		pantalla.send("tokenPantalla");
 
-		// hilos
+		// hilo para el controlador 
 		Thread controlador = new Thread(new Controlador(solicitudes, respuestas));
         controlador.start();
 
@@ -63,13 +57,15 @@ public class Ejercicio4 {
 				e.printStackTrace();
 			}
 		}
+		// sin esto el controlador nunca terminaria 
 		solicitudes.send(-1); // Enviamos una señal de terminación al controlador
 	}
 }
 
 class Controlador implements Runnable {
-    private MailBox solicitudes;
-    private MailBox[] respuestas;
+	// el controlador recibe las solicitudes de los aficionados 
+    private MailBox solicitudes; // buzón para recibir las solicitudes de los aficionados
+    private MailBox[] respuestas; // para diferenciar a cada aficionado y enviarle la respuesta a su buzón correspondiente
     private Random rand;
 
     public Controlador(MailBox solicitudes, MailBox[] respuestas) {
@@ -81,30 +77,32 @@ class Controlador implements Runnable {
     @Override
     public void run() {
         while (true) { 
-            // 1. Recibe la petición del aficionado
-            int id = (Integer) solicitudes.receive(); 
+            //Recibe la petición del aficionado
+            int id = (Integer) solicitudes.receive();
 
-            // 2. El servidor estima el tiempo (1 a 10)
+			// si el id es -1 
+			if (id == -1) { // Señal de terminación para el controlador 
+				break;
+			}
+			
+            // El servidor estima el tiempo (1 a 10)
             int t = rand.nextInt(10) + 1;
             String colaAsignada;
-
-            // FORMA INTUITIVA: Asignamos la cola según el tiempo
+            // Asignación de cola según el tiempo
             if (t <= 5) {
                 colaAsignada = "R";
             } else {
                 colaAsignada = "L";
             }
 
-            // 3. Envía la respuesta al buzón del aficionado
+            // Envía la respuesta al buzón del aficionado
             DatosAsignacion datos = new DatosAsignacion(t, colaAsignada);
-			respuestas[id].send(datos);
-        }
+			respuestas[id].send(datos);// enviamos las respuestas al buzon correspodiente de cada aficionado      
+		}
     }
 }
 
-
-
-// La clase implementa Runnable para ser ejecutada por un Thread 
+// implementamos el runable para crear los hilos de los aficionados
 class Aficionado implements Runnable {
 	private int id;
 	private MailBox solicitudes;
@@ -115,7 +113,8 @@ class Aficionado implements Runnable {
 	private MailBox pantalla;
 	private Random rand;
 
-	// Constructor que recibe las referencias a los buzones compartidos
+
+	// Constructor 
 	public Aficionado(int id,MailBox solicitudes, MailBox miRespuesta, MailBox tornoR, MailBox tornoL, MailBox pantalla) {
 		this.id = id;
 		this.solicitudes = solicitudes; 
@@ -130,42 +129,46 @@ class Aficionado implements Runnable {
 	public void run() {
 		for (int ciclo = 0; ciclo < 5; ciclo++) {
 			try {
-				// 1. Acción previa (caminar hacia los baños)
+				// simulamos el tiempo de paso por el aficionado 
 				Thread.sleep(rand.nextInt(500) + 20); // Simulamos el paseo
 
-				// 2. Solicita turno al controlador
-				solicitudes.send(id);// Enviamos nuestro ID para que el controlador sepa a quién responder
-				DatosAsignacion datos = miRespuesta.receive(); // Esperamos la respuesta del controlador
+				// Solicita turno al controlador
+				solicitudes.send(id);// Enviamos nuestro ID 
+				DatosAsignacion datos = (DatosAsignacion) miRespuesta.receive(); // Esperamos la respuesta del controlador
 				
 				int t = datos.tiempo;
-				String colaAsignada = datos.cola;
+				String x = datos.cola;
 
-				MailBox tornoAsignado;
+				// inicializamos el buzon del torno asignado 
+				MailBox tornoAsignado= null;
 				// Asignación de cola según el tiempo
-				if (colaAsignada.equals("R")) {
-                    tornoAsignado = tornoR;
-                } else {
-                    tornoAsignado = tornoL;
-                }
+				switch (x) {
+					case "R":
+						tornoAsignado = tornoR;
+        				break;
+    				case "L":
+						tornoAsignado = tornoL;
+       				    break;
+				}
 
-				// 2. Solicita ponerse en la cola asignada
-				// El hilo se bloquea si el buzón está vacío (alguien está usando el torno)
+				// Solicita ponerse en la cola asignada
+				// El hilo se bloquea si el buzón está vacío (sin token, entonces aficionado espera su turno )
 				Object tokenTorno = tornoAsignado.receive();
 
-				// 3. Realiza la validación en el torno asignado
-				Thread.sleep(t * 100); // Multiplico por 100ms para simular el tiempo T
+				// simulamos el tiempo t
+				Thread.sleep(t * 100); 
 
-				// 4. Libera la cola enviando el token de vuelta
+				// Libera la cola enviando el token de vuelta
 				tornoAsignado.send(tokenTorno);
 
-				// 5. Imprime en pantalla (Protegido por exclusión mutua)
+				//Imprime en pantalla exclusion mutua
 				Object tokenPantalla = pantalla.receive();
-				System.out.println("Aficionado " + id + " ha usado la cola " + colaAsignada);
+				System.out.println("Aficionado " + id + " ha usado la cola " + x);
 				System.out.println("Tiempo de validación = " + t);
 				System.out.println("Thread.sleep(" + t + ")");
-				System.out.println("Aficionado " + id + " liberando la cola " + colaAsignada);
+				System.out.println("Aficionado " + id + " liberando la cola " + x);
 				System.out.println("---------------------------------");
-				pantalla.send(tokenPantalla);
+				pantalla.send(tokenPantalla); // enviamos el token de la pantalla al buzon para que otro aficionado pueda imprimir su mensaje
 
 			} catch (InterruptedException e) {
 				e.printStackTrace();
