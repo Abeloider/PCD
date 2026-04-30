@@ -4,20 +4,19 @@ import java.util.Random;
 import java.util.concurrent.Semaphore;
 
 public class Ejercicio2 {
-	// Definimos los 3 paneles como recursos compartidos
+	// Creacion de los 3 paneles
 	public static Panel[] paneles = { new Panel("Panel 1", 10, 10), new Panel("Panel 2", 450, 10),
 			new Panel("Panel 3", 900, 10) };
 
-	// Semáforo general donde lo inicializamos a 3 ya que es el numero de paneles
-	// disponibles
+	// Semáforo general donde lo inicializamos a 3 ya que es el numero de paneles disponibles
 	public static Semaphore general = new Semaphore(3);
 
-	// Semáforos binarios para que cada panel individual sea usado en exclusión
-	// mutua
-	// para que cada panel solo pueda ser usado por un equipo a la vez
+	/* Semáforos binarios para que cada panel individual sea usado en exclusión mutua
+	por un solo equipo a la vez
+	*/
 	public static Semaphore[] binario = { new Semaphore(1), new Semaphore(1), new Semaphore(1) };
 
-	// ejecutamos el programa 10 veces para ver com se van usando los paneles
+	// 10 equipos
 	public static void main(String[] args) {
 		Thread[] equipos = new Thread[10];
 		for (int i = 0; i < 10; i++) {
@@ -41,13 +40,20 @@ class Equipo extends Thread {
 		for (int iteracion = 0; iteracion < 3; iteracion++) {
 			int resultado[][] = new int[4][5]; // Matriz para almacenar los mejores resultados de cada deportista
 			for (int deportista = 0; deportista < 4; deportista++) { // Para cada deportista / fila
-				for (int ejercicio = 0; ejercicio < 5; ejercicio++) { // Para cada ejercicio / columna
-					int mejorMarca = 0; // Variable para almacenar la mejor marca del deportista en el ejercicio
+				int mejorMarca = 2 ^ 10; // En la prueba de sprint la mejor marca es la más baja
+				for (int intento = 0; intento < 5; intento++) { // Cada deportista tiene 5 intentos por ejercicio
+					int marca = rand.nextInt(100); // genera un numero aleatiorio entre 0 al 99
+					if (marca < mejorMarca)
+						mejorMarca = marca; // actualizamos la mejor marca si es mas baja que la mejor marca actual
+				}
+				resultado[deportista][0] = mejorMarca; // guardamos la mejor marca en el resultado
+				
+				for (int ejercicio = 1; ejercicio < 5; ejercicio++) { // Para cada ejercicio / columna
+					mejorMarca = 0;
 					for (int intento = 0; intento < 5; intento++) { // Cada deportista tiene 5 intentos por ejercicio
 						int marca = rand.nextInt(100); // genera un numero aleatiorio entre 0 al 99
 						if (marca > mejorMarca)
-							mejorMarca = marca; // actualizamos la mejor marca si marca es mejor que la mejor marca
-												// actual
+							mejorMarca = marca; // actualizamos la mejor marca si es mas alta que la mejor marca actual
 					}
 					resultado[deportista][ejercicio] = mejorMarca; // guardamos la mejor marca en el resultado
 				}

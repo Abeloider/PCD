@@ -4,7 +4,6 @@ import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Ejercicio1 {
-	//
 	public static ReentrantLock lock = new ReentrantLock();
 
 	public static void main(String[] args) {
@@ -35,7 +34,7 @@ public class Ejercicio1 {
 
 class Cuadrado extends Thread {
 	private int matriz[][];
-
+	//Creacion de la matriz a partir de los numeros
 	public Cuadrado(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
 		this.matriz = new int[3][3];
 		this.matriz[0][0] = a1;
@@ -75,6 +74,7 @@ class Cuadrado extends Thread {
 				for (int j = 0; j < 3; j++) {
 					suma = 0;
 					for (int k = 0; k < 3; k++) {
+						//Calculo del cuadrado
 						suma += matriz[i][k] * matriz[k][j];
 					}
 					resultado[i][j] = suma;
@@ -91,7 +91,7 @@ class Cuadrado extends Thread {
 
 class Suma extends Thread {
 	private int matriz[][];
-
+	//Creacion de la matriz a partir de los numeros
 	public Suma(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
 		this.matriz = new int[3][3];
 		this.matriz[0][0] = a1;
@@ -129,6 +129,7 @@ class Suma extends Thread {
 			System.out.println("2A");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
+					//Calculo de la sumaclas
 					matriz[i][j] = matriz[i][j] * 2;
 					System.out.print(matriz[i][j] + " ");
 				}

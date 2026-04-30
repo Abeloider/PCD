@@ -3,6 +3,17 @@ package ejercicios;
 import java.util.Random;
 import java.util.concurrent.locks.*;
 
+public class Ejercicio3 {
+	public static void main(String[] args) {
+		Monitores monitor = new Monitores();
+
+		// Simulación con 50 hilos cliente
+		for (int i = 1; i <= 50; i++) {
+			new cliente(i, monitor).start();
+		}
+	}
+}
+
 class Monitores {
 	// no utilizamos el monitor con synchronized ya que este solo nos permite
 	// disponer de una cola de espera
@@ -152,7 +163,7 @@ class Monitores {
 				}
 			}
 
-			// tenemos que elgir una zona al azar de las 4 pero solo entre las libres
+			// tenemos que elegir una zona al azar de las 4 pero solo entre las libres
 			if (zonasLibres > 0) { // comprobamos que este la zona libre
 				int zonaAleatoria = rand.nextInt(zonasLibres);
 				int contador = 0;
@@ -166,7 +177,6 @@ class Monitores {
 						contador++;
 					}
 				}
-
 			} else {
 				zonaElegida = 0;
 				for (int i = 0; i < 4; i++) {
@@ -243,17 +253,6 @@ class cliente extends Thread {
 			monitor.salirZona(zonaElegida);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		}
-	}
-}
-
-public class Ejercicio3 {
-	public static void main(String[] args) {
-		Monitores monitor = new Monitores();
-
-		// Simulación con 50 hilos cliente
-		for (int i = 1; i <= 50; i++) {
-			new cliente(i, monitor).start();
 		}
 	}
 }

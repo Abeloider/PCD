@@ -5,7 +5,10 @@ import messagepassing.MailBox; // Importamos la clase de la biblioteca JMP
 import java.io.Serializable;
 import java.util.Random;
 
-
+/* 	Implementamos la clase serializable ya que no existe una memoria compartida
+	lo que hace exactamente es convertir el objeto, enviarlo, y deserializarlo en el destino 
+	para crear una copia exacta sin usar una memoria compartida, evitando errores de concurrencia
+*/
 class DatosAsignacion implements Serializable {
 	int tiempo; 
 	String cola; 
@@ -19,11 +22,12 @@ class DatosAsignacion implements Serializable {
 
 
 public class Ejercicio4 {
-
 	public static void main(String[] args) {
-		// BUZON PARA EL CONTROLADOR 
+		// Aplicamos el patrin de "Simulacion de channel con Buzones" 
+		// 
 		MailBox solicitudes = new MailBox(); 
 		MailBox[] respuestas = new MailBox[50]; 
+
 		for (int i = 0; i < 50; i++) {
             respuestas[i] = new MailBox();
         }
@@ -40,8 +44,8 @@ public class Ejercicio4 {
 		tornoL.send("tokenL");
 		pantalla.send("tokenPantalla");
 
+		// hilos
 		Thread controlador = new Thread(new Controlador(solicitudes, respuestas));
-        controlador.setDaemon(true); // Para que el programa cierre cuando acaben los aficionados
         controlador.start();
 
 		// creamos los hilos para cada aficionado
@@ -59,6 +63,7 @@ public class Ejercicio4 {
 				e.printStackTrace();
 			}
 		}
+		solicitudes.send(-1); // Enviamos una señal de terminación al controlador
 	}
 }
 
@@ -130,9 +135,11 @@ class Aficionado implements Runnable {
 
 				// 2. Solicita turno al controlador
 				solicitudes.send(id);// Enviamos nuestro ID para que el controlador sepa a quién responder
-				DatosAsignacion datos = (DatosAsignacion) miRespuesta.receive(); // Esperamos la respuesta del controlador
+				DatosAsignacion datos = miRespuesta.receive(); // Esperamos la respuesta del controlador
+				
 				int t = datos.tiempo;
 				String colaAsignada = datos.cola;
+
 				MailBox tornoAsignado;
 				// Asignación de cola según el tiempo
 				if (colaAsignada.equals("R")) {
