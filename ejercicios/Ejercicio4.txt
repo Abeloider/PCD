@@ -1,0 +1,104 @@
+class DatosAsigacion implements Serializable {
+    int tiempo; 
+    String cola; 
+    // implementacion del constructor 
+    public DatosAsignacion(int tiempo, String cola) {
+		Asignar variables;  
+	}
+}
+Public class Principal {
+    Void main () {
+        Crear MailBox solicitudes;
+        Crear [] Mailbox respuestas[50];
+        Repetir 50 veces (i) {
+            respuestas[i]= Crear MailBox(); 
+        }
+        Crear MailBox tornoR;
+        Crear MailBox tornoL;
+        // introducimos el token inicial 
+        tornoR.send(token); 
+        tornoL.send(token); 
+        pantalla.send(token); 
+        Crear hilo Controlador; 
+        Controlador.start; 
+        Crear hilo aficionado; 
+        Repetir 50 veces (i){
+            Crear Aficionado(i, solicitudes, respuestas[i], tornoR, tornoL, pantalla);
+            Aficionado.start();
+        }
+        Repetir 50 veces (i){
+            Aficionado[i].join();
+        } 
+        solicitudes.send(-1);
+    }
+}
+
+Hilo Controlador implements Runnable {
+    private MailBox solicitudes; 
+    private MailBox[] respuestas;
+    private Random rand;
+    // cosntructor 
+    public Controlador(MailBox solicitudes, MailBox[] respuestas) {
+        Asignar variables
+    }
+    public void run() {
+        Repetir infinitamente {
+            id = solicitudes.receive(); 
+            Si (id == -1){
+                Romper bucle;
+            }
+            Generar numero aleatorio t; 
+            Si (t <= 5){
+                cola = "R";
+            }
+            Sino{
+                cola = "L"; 
+            }
+            Crear DatosAsignacion(t,cola); 
+            respuestas[id].send(DatosAsignacion)
+        }
+    }
+}
+
+// HILO AFICIONADO
+Hilo aficionado {
+    private int id;
+	private MailBox solicitudes;
+	private MailBox miRespuesta;
+	private MailBox tornoR;
+	private MailBox tornoL;
+	private MailBox pantalla;
+	private Random rand;
+    Public Aficionado(id, solicitudes, miRespuesta, tornoR, tornoL, pantalla){
+        Asignar variables;
+    }
+
+    Void run () { 
+        Repetir 5 veces {
+                dormir hilo // simular paseo 
+                solicitud.send(id); 
+                DatosAsignacion = miRespuesta.receive(); 
+                int t = datos.tiempo;
+				String x = datos.cola;
+                MailBox tornoAsignado= null;
+                Switch (x) {
+                    Caso "R":
+                        tornoAsignado = tornoR;
+                        Romper;
+                    Caso "L":
+                        tornoAsignado = tornoL;
+                        Romper;
+                }
+                tokenTorno = tornoAsignado.receive();
+                simulamos el tiempo t; 
+                tornoAsignado.send(tokenTorno);
+                tokenPantalla = pantalla.receive();
+                imprimimos el formato indicado
+                pantalla.send(tokenPantalla); 
+        }
+    }
+}
+
+
+
+

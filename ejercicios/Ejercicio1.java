@@ -5,10 +5,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Ejercicio1 {
 	public static ReentrantLock lock = new ReentrantLock();
-
 	public static void main(String[] args) {
-		for (int i = 0; i < 10; i++) {
-			Random rand = new Random();
+			Random rand = new Random(); // creamos un 
 			int v[] = new int[9];
 			for (int j = 0; j < 9; j++) {
 				v[j] = rand.nextInt(10) + 1;
@@ -19,17 +17,12 @@ public class Ejercicio1 {
 			s.start();
 			try {
 				c.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			try {
 				s.join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-}
 
 class Cuadrado extends Thread {
 	private int matriz[][];
@@ -48,6 +41,7 @@ class Cuadrado extends Thread {
 	}
 
 	public void run() {
+		for (int m = 0; m < 10; m++) { 
 		Ejercicio1.lock.lock();
 		try {
 			int suma;
@@ -87,6 +81,7 @@ class Cuadrado extends Thread {
 		}
 	}
 }
+}
 
 class Suma extends Thread {
 	private int matriz[][];
@@ -105,12 +100,12 @@ class Suma extends Thread {
 	}
 
 	public void run() {
+		for (int m = 0; m < 10; m++) {
 		Ejercicio1.lock.lock();
 		try {
 			System.out.println("A + A");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
-					matriz[i][j] = matriz[i][j];
 					System.out.print(matriz[i][j] + " ");
 				}
 				System.out.println();
@@ -119,7 +114,6 @@ class Suma extends Thread {
 			System.out.println("+\n");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
-					matriz[i][j] = matriz[i][j];
 					System.out.print(matriz[i][j] + " ");
 				}
 				System.out.println();
@@ -129,8 +123,8 @@ class Suma extends Thread {
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
 					//Calculo de la suma
-					matriz[i][j] = matriz[i][j] + matriz[i][j];
-					System.out.print(matriz[i][j] + " ");
+					int total = matriz[i][j] + matriz[i][j];
+					System.out.print(total + " ");
 				}
 				System.out.println();
 			}
@@ -139,4 +133,5 @@ class Suma extends Thread {
 			Ejercicio1.lock.unlock();
 		}
 	}
+}
 }
