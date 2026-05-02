@@ -7,46 +7,38 @@ public class Ejercicio1 {
 	public static ReentrantLock lock = new ReentrantLock();
 
 	public static void main(String[] args) {
-		for (int i = 0; i < 10; i++) {
-			Random rand = new Random();
-			int v[] = new int[9];
-			for (int j = 0; j < 9; j++) {
-				v[j] = rand.nextInt(10) + 1;
-			}
-			Cuadrado c = new Cuadrado(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
-			Suma s = new Suma(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
+		    Cuadrado c = new Cuadrado();
+       		Suma s = new Suma();
 			c.start();
 			s.start();
 			try {
 				c.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			try {
 				s.join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-}
+
 
 class Cuadrado extends Thread {
-	private int matriz[][];
-	//Creacion de la matriz a partir de los numeros
-	public Cuadrado(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
+	private int[][] matriz;
+	public Cuadrado() {
 		this.matriz = new int[3][3];
-		this.matriz[0][0] = a1;
-		this.matriz[0][1] = a2;
-		this.matriz[0][2] = a3;
-		this.matriz[1][0] = a4;
-		this.matriz[1][1] = a5;
-		this.matriz[1][2] = a6;
-		this.matriz[2][0] = a7;
-		this.matriz[2][1] = a8;
-		this.matriz[2][2] = a9;
+	}
+
+	public void run() {
+		Random rand = new Random();
+		for (int repeticion = 0; repeticion < 10; repeticion++) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    matriz[i][j] = rand.nextInt(10) + 1;
+                }
+            }
 		Ejercicio1.lock.lock();
 		try {
+			int suma;
+			int[][] resultado = new int[3][3];
 			System.out.println("A x A");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
@@ -63,14 +55,16 @@ class Cuadrado extends Thread {
 				System.out.println();
 			}
 			System.out.println();
-			System.out.println("2A");
+			System.out.println("A2");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
-					//Calculo de la sumaclas
-					matriz[i][j] = matriz[i][j] * 2;
-					//Calculo de la suma
-					matriz[i][j] = matriz[i][j] + matriz[i][j];
-					System.out.print(matriz[i][j] + " ");
+					suma = 0;
+					for (int k = 0; k < 3; k++) {
+						//Calculo del cuadrado
+						suma += matriz[i][k] * matriz[k][j];
+					}
+					resultado[i][j] = suma;
+					System.out.print(resultado[i][j] + " ");
 				}
 				System.out.println();
 			}
@@ -80,32 +74,27 @@ class Cuadrado extends Thread {
 		}
 	}
 }
-
-
+}
 
 class Suma extends Thread {
-	private int matriz[][];
-	//Creacion de la matriz a partir de los numeros
-	public Suma(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9) {
+	private int[][] matriz;
+	public Suma() {
 		this.matriz = new int[3][3];
-		this.matriz[0][0] = a1;
-		this.matriz[0][1] = a2;
-		this.matriz[0][2] = a3;
-		this.matriz[1][0] = a4;
-		this.matriz[1][1] = a5;
-		this.matriz[1][2] = a6;
-		this.matriz[2][0] = a7;
-		this.matriz[2][1] = a8;
-		this.matriz[2][2] = a9;
 	}
 
 	public void run() {
+		Random rand = new Random();
+		for (int repeticion = 0; repeticion < 10; repeticion++) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    matriz[i][j] = rand.nextInt(10) + 1;
+                }
+            }
 		Ejercicio1.lock.lock();
 		try {
 			System.out.println("A + A");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
-					matriz[i][j] = matriz[i][j];
 					System.out.print(matriz[i][j] + " ");
 				}
 				System.out.println();
@@ -114,7 +103,6 @@ class Suma extends Thread {
 			System.out.println("+\n");
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
-					matriz[i][j] = matriz[i][j];
 					System.out.print(matriz[i][j] + " ");
 				}
 				System.out.println();
@@ -124,8 +112,8 @@ class Suma extends Thread {
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
 					//Calculo de la suma
-					matriz[i][j] = matriz[i][j] + matriz[i][j];
-					System.out.print(matriz[i][j] + " ");
+					int suma = matriz[i][j] + matriz[i][j];
+					System.out.print(suma + " ");
 				}
 				System.out.println();
 			}
@@ -134,4 +122,5 @@ class Suma extends Thread {
 			Ejercicio1.lock.unlock();
 		}
 	}
+}
 }
